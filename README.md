@@ -1,40 +1,7 @@
 # AUV_IMU
-完成IMU於python上之視覺化
-主要使用 ：
-matplotlib
-numpy
-**Code:** 
+**Reference:**
+[3D 顯示軸的旋轉](https://matplotlib.org/examples/mplot3d/rotate_axes3d_demo.html)
+[以滑鼠拖曳matplotlib 3D圖形](https://stackoverflow.com/questions/54119999/python-tkinter-3d-plots-cannot-pan-or-zoom)
 
-**Rx** (roll)
-
-$$
- \left[
- \begin{matrix}
-   1 & 0 & 0 \\
-   0 & cos & sin \\
-   0 & sin & cos
-  \end{matrix}
-  \right] \
-$$
-**Ry** (pitch)
-
-$$
- \left[
- \begin{matrix}
-   cos & 0 & sin \\
-   0 & 1 & 0 \\
-   sin & 0 & cos
-  \end{matrix}
-  \right] \
-$$
-**Rz** (yaw)
-$$
- \left[
- \begin{matrix}
-   cos & sin & 0 \\
-   sin & cos & 0 \\
-   0 & 0 & 1
-  \end{matrix}
-  \right] \
-$$
-![](https://i.imgur.com/VgiOClk.png)
+### 結果圖
+![](https://i.imgur.com/TMd9Dhs.png)
