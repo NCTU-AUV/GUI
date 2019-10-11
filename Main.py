@@ -67,18 +67,9 @@ def Re_Canvasdraw(Eular_Matrix):
     ax.set_zlim(-0.6,1)
     ax.legend()
     canvas.draw()
-def change_Roll(roll):
-    global x
-    x[0]=float(roll)*math.pi/180.
-    Re_Canvasdraw(x)
-def change_Pitch(pitch):
-    global x
-    x[1]=float(pitch)*math.pi/180.
-    Re_Canvasdraw(x)
-def change_Yaw(yaw):
-    global x
-    x[2]=float(yaw)*math.pi/180.
-    Re_Canvasdraw(x)
+
+
+
 
 
 class Page(tk.Frame):
@@ -105,9 +96,8 @@ class Page3(Page):
 		fig = Figure(figsize=(10, 10), dpi=50) 
 		canvas = FigureCanvasTkAgg(fig, master=self)
 		canvas.draw()
-		x = [0,0,0]    #Eular angle X ,Y,Z
-		global x
-		R=eulerAnglesToRotationMatrix(x)
+		self.x = [0,0,0]    #Eular angle X ,Y,Z
+		R=eulerAnglesToRotationMatrix(self.x)
 		#print(R)
 		x_axis=np.dot(R,np.array([[1],[0],[0]]))
 		y_axis=np.dot(R,np.array([[0],[1],[0]]))
@@ -130,15 +120,24 @@ class Page3(Page):
 		#toolbar.update()
 		canvas.get_tk_widget().place(x=0, y=0)
 		global canvas
-		s_roll = tk.Scale(self,label="row",from_=-90,to=90,orient=tk.HORIZONTAL,length=200,showvalue=1,tickinterval=90,resolution=0.01,command=change_Roll)
-		s_pitch = tk.Scale(self,label="pitch",from_=-90,to=90,orient=tk.HORIZONTAL,length=200,showvalue=1,tickinterval=90,resolution=0.01,command=change_Pitch)
-		s_yaw = tk.Scale(self,label="yaw",from_=-90,to=90,orient=tk.HORIZONTAL,length=200,showvalue=1,tickinterval=90,resolution=0.01,command=change_Yaw)
+		s_roll = tk.Scale(self,label="row",from_=-90,to=90,orient=tk.HORIZONTAL ,length=200,showvalue=1,tickinterval=90,resolution=0.01,command=self.change_Roll)
+		s_pitch = tk.Scale(self,label="pitch",from_=-90,to=90,orient=tk.HORIZONTAL,length=200,showvalue=1,tickinterval=90,resolution=0.01,command=self.change_Pitch)
+		s_yaw = tk.Scale(self,label="yaw",from_=-90,to=90,orient=tk.HORIZONTAL,length=200,showvalue=1,tickinterval=90,resolution=0.01,command=self.change_Yaw)
 		s_roll.set(0)
 		s_pitch.set(0)
 		s_yaw.set(0)
 		s_yaw.pack()
 		s_pitch.pack()
 		s_roll.pack()
+	def change_Roll(self,roll):
+	    self.x[0]=float(roll)*math.pi/180.
+	    Re_Canvasdraw(self.x)
+	def change_Pitch(self,pitch):
+	    self.x[1]=float(pitch)*math.pi/180.
+	    Re_Canvasdraw(self.x)
+	def change_Yaw(self,yaw):
+		self.x[2]=float(yaw)*math.pi/180.
+		Re_Canvasdraw(self.x)
 
 
 class MainView(tk.Frame):
