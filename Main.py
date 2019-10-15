@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+import cv2
+from PIL import ImageTk
+from PIL import Image
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -15,6 +19,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 import Tkinter as tk
+import time
 
 #==========            Make a 3D Arrow             ==============
 class Arrow3D(FancyArrowPatch):
@@ -67,9 +72,26 @@ def Re_Canvasdraw(Eular_Matrix):
     ax.set_zlim(-0.6,1)
     ax.legend()
     canvas.draw()
-
-
-
+# up date image
+'''
+class Update_image:
+	def __init__(self , parent):
+		self.label = tk.Label(parent,text='1')
+		self.label.pack()
+		self.cap = cv2.VideoCapture(0)
+		self.label.after(1000,self.refresh_Label)
+	def refresh_Label(self):
+		suc , image = self.cap.read()
+		if suc:
+			image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+			image = Image.fromarray(image)
+			image = ImageTk.PhotoImage(image)
+			self.label.configure(image=image)
+			self.label.image = image
+			self.label.after(50, self.refresh_Label)
+		else:
+			print("trouble")
+'''
 
 
 class Page(tk.Frame):
@@ -81,15 +103,54 @@ class Page(tk.Frame):
 class Page1(Page):
 	def __init__(self, *args, **kwargs):
 		Page.__init__(self, *args, **kwargs)
-		label = tk.Label(self, text="This is page 1")
-		label.pack(side="top", fill="both", expand=True)
-
+		self.label = tk.Label(self,text='1')
+		self.label.pack()
+		self.cap = cv2.VideoCapture(0)
+		self.label.after(1000,self.refresh_Label)
+	def refresh_Label(self):
+		suc , image = self.cap.read()
+		if suc:
+			image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+			image = Image.fromarray(image)
+			image = ImageTk.PhotoImage(image)
+			self.label.configure(image=image)
+			self.label.image = image
+			self.label.after(50, self.refresh_Label)
+		else:
+			print("trouble")
+		
 class Page2(Page):
 	def __init__(self, *args, **kwargs):
 		Page.__init__(self, *args, **kwargs)
-		label = tk.Label(self, text="This is page 2")
-		label.pack(side="top", fill="both", expand=True)
+		label = tk.Label(self, text="temperature")
+		label.pack(side="top")
+		f =Figure(figsize=(5,3), dpi=100)
+		a = f.add_subplot(111)
+		t = np.arange(0.0,3,0.01)
+		s = np.full(np.size(t),27)
+		ran=np.random.randint(-5,5,size=np.size(t))/10.
+		s=s+ran
+		a.plot(t, s)
+		a.set_ylim(10,40)
+		canvas =FigureCanvasTkAgg(f, master=self)
+		canvas.show()
+		canvas.get_tk_widget().pack(side=tk.TOP,fill="both")
 
+		label = tk.Label(self, text="humidity")
+		label.pack(side="top")
+		f =Figure(figsize=(5,3), dpi=100)
+		a = f.add_subplot(111)
+		t = np.arange(0.0,3,0.01)
+		s = np.linspace(26,28,np.size(t))
+		ran=np.random.randint(-5,5,size=np.size(t))/8.
+		s=s+ran
+		a.plot(t, s)
+		a.set_ylim(0,100)
+		canvas =FigureCanvasTkAgg(f, master=self)
+		canvas.show()
+		canvas.get_tk_widget().pack(side=tk.TOP,fill="both")
+		label = tk.Label(self, text="voltage")
+		label.pack(side="top")
 class Page3(Page):
 	def __init__(self, *args, **kwargs):
 		Page.__init__(self, *args, **kwargs)
