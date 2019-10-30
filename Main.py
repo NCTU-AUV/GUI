@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+import rospy
+from std_msgs.msg import Float32
+from std_msgs.msg import Float32MultiArray
+import traceback
 import cv2
 from PIL import ImageTk
 from PIL import Image
@@ -20,6 +24,7 @@ from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 import Tkinter as tk
 import time
+
 
 #==========            Make a 3D Arrow             ==============
 class Arrow3D(FancyArrowPatch):
@@ -55,8 +60,7 @@ def eulerAnglesToRotationMatrix(theta) :
     R = np.dot(R_z, np.dot( R_y, R_x ))
  
     return R
-def Re_Canvasdraw(Eular_Matrix):
-    global ax
+def Re_Canvasdraw(Eular_Matrix,ax):
     global canvas
     R=eulerAnglesToRotationMatrix(Eular_Matrix)
     x_axis=np.dot(R,np.array([[1],[0],[0]]))
@@ -72,27 +76,6 @@ def Re_Canvasdraw(Eular_Matrix):
     ax.set_zlim(-0.6,1)
     ax.legend()
     canvas.draw()
-# up date image
-'''
-class Update_image:
-	def __init__(self , parent):
-		self.label = tk.Label(parent,text='1')
-		self.label.pack()
-		self.cap = cv2.VideoCapture(0)
-		self.label.after(1000,self.refresh_Label)
-	def refresh_Label(self):
-		suc , image = self.cap.read()
-		if suc:
-			image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-			image = Image.fromarray(image)
-			image = ImageTk.PhotoImage(image)
-			self.label.configure(image=image)
-			self.label.image = image
-			self.label.after(50, self.refresh_Label)
-		else:
-			print("trouble")
-'''
-
 
 class Page(tk.Frame):
 	def __init__(self, *args, **kwargs):
@@ -121,36 +104,47 @@ class Page1(Page):
 		
 class Page2(Page):
 	def __init__(self, *args, **kwargs):
-		Page.__init__(self, *args, **kwargs)
-		label = tk.Label(self, text="temperature")
-		label.pack(side="top")
-		f =Figure(figsize=(5,3), dpi=100)
-		a = f.add_subplot(111)
-		t = np.arange(0.0,3,0.01)
-		s = np.full(np.size(t),27)
-		ran=np.random.randint(-5,5,size=np.size(t))/10.
-		s=s+ran
-		a.plot(t, s)
-		a.set_ylim(10,40)
-		canvas =FigureCanvasTkAgg(f, master=self)
-		canvas.show()
-		canvas.get_tk_widget().pack(side=tk.TOP,fill="both")
+		#===============      for temp  ====================#
 
-		label = tk.Label(self, text="humidity")
-		label.pack(side="top")
-		f =Figure(figsize=(5,3), dpi=100)
-		a = f.add_subplot(111)
-		t = np.arange(0.0,3,0.01)
-		s = np.linspace(26,28,np.size(t))
-		ran=np.random.randint(-5,5,size=np.size(t))/8.
-		s=s+ran
-		a.plot(t, s)
-		a.set_ylim(0,100)
-		canvas =FigureCanvasTkAgg(f, master=self)
-		canvas.show()
-		canvas.get_tk_widget().pack(side=tk.TOP,fill="both")
-		label = tk.Label(self, text="voltage")
-		label.pack(side="top")
+		self.temp_x = 0
+		self.last_tdata = 0
+		Page.__init__(self, *args, **kwargs)
+		rospy.Subscriber("/Temp", Float32, self.Temp_back)
+		self.temp_fig =Figure(figsize=(5,3), dpi=100)
+		self.temp_ax=self.temp_fig.add_subplot(111)
+		self.temp_ax.set_xlim((0, 100))
+		self.canvas_T =FigureCanvasTkAgg(self.temp_fig, master=self)
+		self.canvas_T.show()
+		self.canvas_T.get_tk_widget().pack(side=tk.TOP,fill="both")
+
+		#===============      for humidity  =================#
+
+		self.humi_x = 0
+		self.last_hdata = 0
+		rospy.Subscriber("/Humidity", Float32, self.Humi_back)
+		self.humi_fig =Figure(figsize=(5,3), dpi=100)
+		self.humi_ax=self.humi_fig.add_subplot(111)
+		self.humi_ax.set_xlim((0, 100))
+		self.canvas_H =FigureCanvasTkAgg(self.humi_fig, master=self)
+		self.canvas_H.show()
+		self.canvas_H.get_tk_widget().pack(side=tk.TOP,fill="both")
+
+	def Temp_back(self,data):
+		print(data.data)
+		self.temp_ax.plot([self.temp_x-1,self.temp_x],[self.last_tdata,data.data],'blue')
+		self.last_tdata = data.data
+		self.canvas_T.draw()
+		if self.temp_x>100:
+			self.temp_ax.set_xlim((self.temp_x-100, self.temp_x))
+		self.temp_x=self.temp_x+1
+	def Humi_back(self,data):
+		print(data.data)
+		self.humi_ax.plot([self.temp_x-1,self.temp_x],[self.last_hdata,data.data],'blue')
+		self.last_hdata = data.data
+		self.canvas_H.draw()
+		if self.temp_x>100:
+			self.humi_ax.set_xlim((self.humi_x-100, self.humi_x))
+		self.humi_x=self.humi_x+1
 class Page3(Page):
 	def __init__(self, *args, **kwargs):
 		Page.__init__(self, *args, **kwargs)
@@ -164,19 +158,18 @@ class Page3(Page):
 		y_axis=np.dot(R,np.array([[0],[1],[0]]))
 		z_axis=np.dot(R,np.array([[0],[0],[0.5]]))
 
-		ax = fig.add_subplot(111, projection='3d')
-		global ax
-		ax.plot([0,x_axis[0][0]], [0,x_axis[1][0]], [0,x_axis[2][0]],  'r',label='X_axis(Roll)')
+		self.ax = fig.add_subplot(111, projection='3d')
+		self.ax.plot([0,x_axis[0][0]], [0,x_axis[1][0]], [0,x_axis[2][0]],  'r',label='X_axis(Roll)')
 		a = Arrow3D([0,y_axis[0][0]], [0,y_axis[1][0]], [0,y_axis[2][0]],mutation_scale=3, lw=1, arrowstyle="-|>", color="green")
 		#ax.plot([0,y_axis[0][0]], [0,y_axis[1][0]], [0,y_axis[2][0]], color='green')
-		ax.plot([0,z_axis[0][0]], [0,z_axis[1][0]], [0,z_axis[2][0]], color='blue')
-		ax.add_artist(a)
-		ax.set_xlim(-0.6,1)
-		ax.set_ylim(-0.6,1)
-		ax.set_zlim(-0.6,1)
-		ax.legend()
-		ax.mouse_init()
-		ax.view_init(30, 189)
+		self.ax.plot([0,z_axis[0][0]], [0,z_axis[1][0]], [0,z_axis[2][0]], color='blue')
+		self.ax.add_artist(a)
+		self.ax.set_xlim(-0.6,1)
+		self.ax.set_ylim(-0.6,1)
+		self.ax.set_zlim(-0.6,1)
+		self.ax.legend()
+		self.ax.mouse_init()
+		self.ax.view_init(30, 189)
 		#toolbar = NavigationToolbar2TkAgg(canvas, root)
 		#toolbar.update()
 		canvas.get_tk_widget().place(x=0, y=0)
@@ -192,13 +185,13 @@ class Page3(Page):
 		s_roll.pack()
 	def change_Roll(self,roll):
 	    self.x[0]=float(roll)*math.pi/180.
-	    Re_Canvasdraw(self.x)
+	    Re_Canvasdraw(self.x,self.ax)
 	def change_Pitch(self,pitch):
 	    self.x[1]=float(pitch)*math.pi/180.
-	    Re_Canvasdraw(self.x)
+	    Re_Canvasdraw(self.x,self.ax)
 	def change_Yaw(self,yaw):
 		self.x[2]=float(yaw)*math.pi/180.
-		Re_Canvasdraw(self.x)
+		Re_Canvasdraw(self.x,self.ax)
 
 
 class MainView(tk.Frame):
@@ -226,10 +219,17 @@ class MainView(tk.Frame):
         b3.pack(side="left")
 
         #p1.show()
-
+def GUI():
+	rospy.init_node('listener', anonymous=True)
+	root = tk.Tk()
+	main = MainView(root)
+	main.pack(side="top", fill="both", expand=True)
+	root.wm_geometry("1500x1000")
+	root.mainloop()
+	cv2.destroyAllWindows()
 if __name__ == "__main__":
-    root = tk.Tk()
-    main = MainView(root)
-    main.pack(side="top", fill="both", expand=True)
-    root.wm_geometry("1500x1000")
-    root.mainloop()
+	try:
+		GUI()
+	except Exception as e:
+	    exstr = traceback.format_exc()
+	    print(exstr)
