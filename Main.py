@@ -89,30 +89,36 @@ class Page1(Page):
 		self.label = tk.Label(self,text='1')
 		self.label.pack()
 		self.cap = cv2.VideoCapture(0)
-		self.label.after(1000,self.refresh_Label)
+		self.label.after(100,self.refresh_Label)
+		self.cv_upload = 1
 	def refresh_Label(self):
-		suc , image = self.cap.read()
-		if suc:
-			image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-			image = Image.fromarray(image)
-			image = ImageTk.PhotoImage(image)
-			self.label.configure(image=image)
-			self.label.image = image
-			self.label.after(50, self.refresh_Label)
-		else:
-			print("trouble")
-		
+		if(self.cv_upload == 1):
+			suc , image = self.cap.read()
+			suc=1
+			if suc:
+				image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+				image = Image.fromarray(image)
+				image = ImageTk.PhotoImage(image)
+
+				
+				self.label.configure(image=image)
+				self.label.image = image
+			else:
+				print("trouble")
+		self.label.after(100, self.refresh_Label)
+
+	def cv_upload_change(self,num):
+		self.cv_upload = num
 class Page2(Page):
 	def __init__(self, *args, **kwargs):
 		#===============      for temp  ====================#
-
-		self.temp_x = 0
-		self.last_tdata = 0
+		self.x_count = 0
+		self.temp_x = np.arange(1,101)
+		self.tdata =  np.zeros(100)
 		Page.__init__(self, *args, **kwargs)
 		rospy.Subscriber("/Temp", Float32, self.Temp_back)
 		self.temp_fig =Figure(figsize=(5,3), dpi=100)
 		self.temp_ax=self.temp_fig.add_subplot(111)
-		self.temp_ax.set_xlim((0, 100))
 		self.canvas_T =FigureCanvasTkAgg(self.temp_fig, master=self)
 		self.canvas_T.show()
 		self.canvas_T.get_tk_widget().pack(side=tk.TOP,fill="both")
@@ -129,25 +135,50 @@ class Page2(Page):
 		self.canvas_H.show()
 		self.canvas_H.get_tk_widget().pack(side=tk.TOP,fill="both")
 
+		#===============      for voltage  =================#
+		'''
+		self.humi_x = 0
+		self.last_hdata = 0
+		rospy.Subscriber("/Humidity", Float32, self.Humi_back)
+		self.humi_fig =Figure(figsize=(5,3), dpi=100)
+		self.humi_ax=self.humi_fig.add_subplot(111)
+		self.humi_ax.set_xlim((0, 100))
+		self.canvas_H =FigureCanvasTkAgg(self.humi_fig, master=self)
+		self.canvas_H.show()
+		self.canvas_H.get_tk_widget().pack(side=tk.TOP,fill="both")
+		'''
 	def Temp_back(self,data):
-		print(data.data)
-		self.temp_ax.plot([self.temp_x-1,self.temp_x],[self.last_tdata,data.data],'blue')
-		self.last_tdata = data.data
+		#print(data.data)
+		if self.x_count>99:
+			self.tdata=np.roll(self.tdata,-1)
+			self.tdata[99]=data.data
+			self.temp_x=np.roll(self.temp_x,-1)
+			self.temp_x[99]=self.temp_x[98]+1
+			self.temp_ax.cla()
+			self.temp_ax.set_xlim((self.temp_x[0], self.temp_x[99]))
+			self.temp_ax.set_ylim((0, 50))
+			self.temp_ax.plot(self.temp_x,self.tdata)
+		else:
+			self.tdata[self.x_count]=data.data
+			self.x_count+=1
+			self.temp_ax.cla()
+			self.temp_ax.set_ylim((0, 50))
+			self.temp_ax.plot(self.temp_x,self.tdata)
 		self.canvas_T.draw()
-		if self.temp_x>100:
-			self.temp_ax.set_xlim((self.temp_x-100, self.temp_x))
-		self.temp_x=self.temp_x+1
 	def Humi_back(self,data):
-		print(data.data)
-		self.humi_ax.plot([self.temp_x-1,self.temp_x],[self.last_hdata,data.data],'blue')
+		#print(data.data)
+		self.humi_ax.plot([self.humi_x-1,self.humi_x],[self.last_hdata,data.data],'blue')
 		self.last_hdata = data.data
 		self.canvas_H.draw()
-		if self.temp_x>100:
+		if self.humi_x>100:
 			self.humi_ax.set_xlim((self.humi_x-100, self.humi_x))
 		self.humi_x=self.humi_x+1
 class Page3(Page):
 	def __init__(self, *args, **kwargs):
 		Page.__init__(self, *args, **kwargs)
+		self.Euler_update_on = 1
+		self.counter = 0
+		rospy.Subscriber("/Eular", Float32MultiArray, self.Euler_update)
 		fig = Figure(figsize=(10, 10), dpi=50) 
 		canvas = FigureCanvasTkAgg(fig, master=self)
 		canvas.draw()
@@ -174,6 +205,7 @@ class Page3(Page):
 		#toolbar.update()
 		canvas.get_tk_widget().place(x=0, y=0)
 		global canvas
+		'''
 		s_roll = tk.Scale(self,label="row",from_=-90,to=90,orient=tk.HORIZONTAL ,length=200,showvalue=1,tickinterval=90,resolution=0.01,command=self.change_Roll)
 		s_pitch = tk.Scale(self,label="pitch",from_=-90,to=90,orient=tk.HORIZONTAL,length=200,showvalue=1,tickinterval=90,resolution=0.01,command=self.change_Pitch)
 		s_yaw = tk.Scale(self,label="yaw",from_=-90,to=90,orient=tk.HORIZONTAL,length=200,showvalue=1,tickinterval=90,resolution=0.01,command=self.change_Yaw)
@@ -183,15 +215,30 @@ class Page3(Page):
 		s_yaw.pack()
 		s_pitch.pack()
 		s_roll.pack()
+		'''
+	'''
 	def change_Roll(self,roll):
-	    self.x[0]=float(roll)*math.pi/180.
-	    Re_Canvasdraw(self.x,self.ax)
+		#print(roll)
+		self.x[0]=float(roll)*math.pi/180.
+		Re_Canvasdraw(self.x,self.ax)
 	def change_Pitch(self,pitch):
 	    self.x[1]=float(pitch)*math.pi/180.
 	    Re_Canvasdraw(self.x,self.ax)
 	def change_Yaw(self,yaw):
 		self.x[2]=float(yaw)*math.pi/180.
 		Re_Canvasdraw(self.x,self.ax)
+	'''
+	def Euler_update(self,data):
+		if self.Euler_update_on == 1:
+			if self.counter >5:
+				self.x[0]=data.data[0]*math.pi/180.
+				self.x[1]=data.data[1]*math.pi/180.
+				self.x[2]=0
+				Re_Canvasdraw(self.x,self.ax)
+				self.counter = 0
+		self.counter += 1
+	def Euler_update_switch(self,num):
+		Euler_update_on = num
 
 
 class MainView(tk.Frame):
@@ -210,9 +257,9 @@ class MainView(tk.Frame):
         p2.place(in_=container, x=0, y=0, relwidth=1, relheight=1)
         p3.place(in_=container, x=0, y=0, relwidth=1, relheight=1)
 
-        b1 = tk.Button(buttonframe, text="Page 1", command=p1.lift)
-        b2 = tk.Button(buttonframe, text="Page 2", command=p2.lift)
-        b3 = tk.Button(buttonframe, text="Page 3", command=p3.lift)
+        b1 = tk.Button(buttonframe, text="Page 1", command=lambda:[p1.lift(),p1.cv_upload_change(1),p3.Euler_update_switch(0)])
+        b2 = tk.Button(buttonframe, text="Page 2", command=lambda:[p2.lift(),p1.cv_upload_change(0),p3.Euler_update_switch(0)])
+        b3 = tk.Button(buttonframe, text="Page 3", command=lambda:[p3.lift(),p1.cv_upload_change(0),p3.Euler_update_switch(1)])
 
         b1.pack(side="left")
         b2.pack(side="left")
