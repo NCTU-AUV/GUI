@@ -39,43 +39,43 @@ class Arrow3D(FancyArrowPatch):
         FancyArrowPatch.draw(self, renderer)
 #=========            function to rotate           ===========
 def eulerAnglesToRotationMatrix(theta) :
-    R_x = np.array([[1,         0,                  0                   ],
-                    [0,         math.cos(theta[0]), -math.sin(theta[0]) ],
-                    [0,         math.sin(theta[0]), math.cos(theta[0])  ]
-                    ])
-         
-         
-                     
-    R_y = np.array([[math.cos(theta[1]),    0,      math.sin(theta[1])  ],
-                    [0,                     1,      0                   ],
-                    [-math.sin(theta[1]),   0,      math.cos(theta[1])  ]
-                    ])
-                 
-    R_z = np.array([[math.cos(theta[2]),    -math.sin(theta[2]),    0],
-                    [math.sin(theta[2]),    math.cos(theta[2]),     0],
-                    [0,                     0,                      1]
-                    ])
+	print(theta[0])
+	
+	R_x = np.array([[1,         0,                  0                   ],
+					[0,         math.cos(theta[0]), math.sin(theta[0]) ],
+					[0,         -math.sin(theta[0]), math.cos(theta[0])  ]
+					])
+	R_y = np.array([[math.cos(theta[1]),    0,      -math.sin(theta[1])  ],
+					[0,                     1,      0                   ],
+					[math.sin(theta[1]),   0,      math.cos(theta[1])  ]
+					])
+	R_z = np.array([[math.cos(theta[2]),    -math.sin(theta[2]),    0],
+					[math.sin(theta[2]),    math.cos(theta[2]),     0],
+					[0,                     0,                      1]
+					])
                      
                      
-    R = np.dot(R_z, np.dot( R_y, R_x ))
+	R = np.dot(R_z, np.dot( R_y, R_x ))
  
-    return R
+	return R
 def Re_Canvasdraw(Eular_Matrix,ax):
-    global canvas
-    R=eulerAnglesToRotationMatrix(Eular_Matrix)
-    x_axis=np.dot(R,np.array([[1],[0],[0]]))
-    y_axis=np.dot(R,np.array([[0],[1],[0]]))
-    z_axis=np.dot(R,np.array([[0],[0],[0.5]]))
-    ax.cla()
-    ax.plot([0,y_axis[0][0]], [0,y_axis[1][0]], [0,y_axis[2][0]],  'green',label='X_axis(Roll)')
-    a = Arrow3D([0,x_axis[0][0]], [0,x_axis[1][0]], [0,x_axis[2][0]],mutation_scale=20, lw=1, arrowstyle="-|>", color="red")
-    ax.add_artist(a)
-    ax.plot([0,z_axis[0][0]], [0,z_axis[1][0]], [0,z_axis[2][0]], color='blue')
-    ax.set_xlim(-0.6,1)
-    ax.set_ylim(-0.6,1)
-    ax.set_zlim(-0.6,1)
-    ax.legend()
-    canvas.draw()
+	global canvas
+	R=eulerAnglesToRotationMatrix(Eular_Matrix)
+	x_axis=np.dot(R,np.array([[1],[0],[0]]))
+	y_axis=np.dot(R,np.array([[0],[1],[0]]))
+	z_axis=np.dot(R,np.array([[0],[0],[0.5]]))
+	ax.cla()
+	ax.plot([0,y_axis[0][0]], [0,y_axis[1][0]], [0,y_axis[2][0]],  'green',label='Y_axis', linewidth=4.0)
+	a = Arrow3D([0,x_axis[0][0]], [0,x_axis[1][0]], [0,x_axis[2][0]],mutation_scale=20, lw=4., arrowstyle="-|>", color="red")
+	ax.add_artist(a)
+	ax.plot([0,z_axis[0][0]], [0,z_axis[1][0]], [0,z_axis[2][0]], color='blue', linewidth=4.0)
+	ax.set_xlim(-0.6,1)
+	ax.set_ylim(-0.6,1)
+	ax.set_zlim(-0.6,1)
+	ax.invert_zaxis()
+	ax.invert_yaxis()
+	ax.legend()
+	canvas.draw()
 
 class Page(tk.Frame):
 	def __init__(self, *args, **kwargs):
@@ -89,10 +89,12 @@ class Page1(Page):
 		self.label = tk.Label(self,text='1')
 		self.label.pack()
 		self.cap = cv2.VideoCapture(0)
-		self.label.after(100,self.refresh_Label)
-		self.cv_upload = 1
+		self.label.after(16,self.refresh_Label)
+		self.cv_upload = 0
 	def refresh_Label(self):
 		if(self.cv_upload == 1):
+			if(self.cap.isOpened() != True):
+				self.cap.open(0)
 			suc , image = self.cap.read()
 			suc=1
 			if suc:
@@ -105,7 +107,10 @@ class Page1(Page):
 				self.label.image = image
 			else:
 				print("trouble")
-		self.label.after(100, self.refresh_Label)
+		
+		else:
+			self.cap.release()
+		self.label.after(16, self.refresh_Label)
 
 	def cv_upload_change(self,num):
 		self.cv_upload = num
@@ -198,6 +203,8 @@ class Page3(Page):
 		self.ax.set_xlim(-0.6,1)
 		self.ax.set_ylim(-0.6,1)
 		self.ax.set_zlim(-0.6,1)
+		self.ax.invert_yaxis()
+		self.ax.invert_zaxis()
 		self.ax.legend()
 		self.ax.mouse_init()
 		self.ax.view_init(30, 189)
@@ -230,15 +237,15 @@ class Page3(Page):
 	'''
 	def Euler_update(self,data):
 		if self.Euler_update_on == 1:
-			if self.counter >5:
+			if self.counter >6:
 				self.x[0]=data.data[0]*math.pi/180.
 				self.x[1]=data.data[1]*math.pi/180.
-				self.x[2]=0
+				self.x[2]=data.data[2]*math.pi/180.
 				Re_Canvasdraw(self.x,self.ax)
 				self.counter = 0
 		self.counter += 1
 	def Euler_update_switch(self,num):
-		Euler_update_on = num
+		self.Euler_update_on = num
 
 
 class MainView(tk.Frame):
