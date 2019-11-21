@@ -39,7 +39,7 @@ class Arrow3D(FancyArrowPatch):
         FancyArrowPatch.draw(self, renderer)
 #=========            function to rotate           ===========
 def eulerAnglesToRotationMatrix(theta) :
-	print(theta[0])
+	print(theta[2])
 	
 	R_x = np.array([[1,         0,                  0                   ],
 					[0,         math.cos(theta[0]), math.sin(theta[0]) ],
@@ -136,6 +136,7 @@ class Page2(Page):
 		self.humi_fig =Figure(figsize=(5,3), dpi=100)
 		self.humi_ax=self.humi_fig.add_subplot(111)
 		self.humi_ax.set_xlim((0, 100))
+		self.humi_ax.set_ylim((0, 100))
 		self.canvas_H =FigureCanvasTkAgg(self.humi_fig, master=self)
 		self.canvas_H.show()
 		self.canvas_H.get_tk_widget().pack(side=tk.TOP,fill="both")
@@ -169,11 +170,13 @@ class Page2(Page):
 			self.temp_ax.cla()
 			self.temp_ax.set_ylim((0, 50))
 			self.temp_ax.plot(self.temp_x,self.tdata)
+		self.temp_ax.set_title("Temperature")
 		self.canvas_T.draw()
 	def Humi_back(self,data):
 		#print(data.data)
 		self.humi_ax.plot([self.humi_x-1,self.humi_x],[self.last_hdata,data.data],'blue')
 		self.last_hdata = data.data
+		self.humi_ax.set_title("Humidity")
 		self.canvas_H.draw()
 		if self.humi_x>100:
 			self.humi_ax.set_xlim((self.humi_x-100, self.humi_x))
@@ -240,7 +243,8 @@ class Page3(Page):
 			if self.counter >6:
 				self.x[0]=data.data[0]*math.pi/180.
 				self.x[1]=data.data[1]*math.pi/180.
-				self.x[2]=data.data[2]*math.pi/180.
+				#self.x[2]=data.data[2]*math.pi/180.
+				self.x[2]=0
 				Re_Canvasdraw(self.x,self.ax)
 				self.counter = 0
 		self.counter += 1
@@ -264,9 +268,9 @@ class MainView(tk.Frame):
         p2.place(in_=container, x=0, y=0, relwidth=1, relheight=1)
         p3.place(in_=container, x=0, y=0, relwidth=1, relheight=1)
 
-        b1 = tk.Button(buttonframe, text="Page 1", command=lambda:[p1.lift(),p1.cv_upload_change(1),p3.Euler_update_switch(0)])
-        b2 = tk.Button(buttonframe, text="Page 2", command=lambda:[p2.lift(),p1.cv_upload_change(0),p3.Euler_update_switch(0)])
-        b3 = tk.Button(buttonframe, text="Page 3", command=lambda:[p3.lift(),p1.cv_upload_change(0),p3.Euler_update_switch(1)])
+        b1 = tk.Button(buttonframe, text="Image", command=lambda:[p1.lift(),p1.cv_upload_change(1),p3.Euler_update_switch(0)])
+        b2 = tk.Button(buttonframe, text="Health", command=lambda:[p2.lift(),p1.cv_upload_change(0),p3.Euler_update_switch(0)])
+        b3 = tk.Button(buttonframe, text="altitude", command=lambda:[p3.lift(),p1.cv_upload_change(0),p3.Euler_update_switch(1)])
 
         b1.pack(side="left")
         b2.pack(side="left")

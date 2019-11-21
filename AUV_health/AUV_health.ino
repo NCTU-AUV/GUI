@@ -12,8 +12,8 @@ float voltage[4]={0};
 
 void loop() {
   char  data[80] ={0};
-  Temp = 35.12+(float)random(10);
-  humidity = 50.12+(float)random(10);
+  Temp = 35.12+(float)random(10)/10;
+  humidity = 50.12+(float)random(10)/10;
   for(int i=0;i<4; i++){
     voltage[i] = 4.2+(float)random(10)/100.;
   }
