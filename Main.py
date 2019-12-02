@@ -39,7 +39,7 @@ class Arrow3D(FancyArrowPatch):
         FancyArrowPatch.draw(self, renderer)
 #=========            function to rotate           ===========
 def eulerAnglesToRotationMatrix(theta) :
-	print(theta[2])
+	#print(theta[2])
 	
 	R_x = np.array([[1,         0,                  0                   ],
 					[0,         math.cos(theta[0]), math.sin(theta[0]) ],
@@ -69,6 +69,7 @@ def Re_Canvasdraw(Eular_Matrix,ax):
 	a = Arrow3D([0,x_axis[0][0]], [0,x_axis[1][0]], [0,x_axis[2][0]],mutation_scale=20, lw=4., arrowstyle="-|>", color="red")
 	ax.add_artist(a)
 	ax.plot([0,z_axis[0][0]], [0,z_axis[1][0]], [0,z_axis[2][0]], color='blue', linewidth=4.0)
+	#print(z_axis)
 	ax.set_xlim(-0.6,1)
 	ax.set_ylim(-0.6,1)
 	ax.set_zlim(-0.6,1)
@@ -186,7 +187,7 @@ class Page3(Page):
 		Page.__init__(self, *args, **kwargs)
 		self.Euler_update_on = 1
 		self.counter = 0
-		rospy.Subscriber("/Eular", Float32MultiArray, self.Euler_update)
+		rospy.Subscriber("/Eular", Float32MultiArray, self.Euler_update,queue_size=1)
 		fig = Figure(figsize=(10, 10), dpi=50) 
 		canvas = FigureCanvasTkAgg(fig, master=self)
 		canvas.draw()
